@@ -192,10 +192,10 @@ func (r *Requests) Do(method, toUrl string, opts ...Option) (resp *Response, err
 	}
 	req.URL = u
 
-	//if host := req.Header.Get("Host"); host != "" {
-	//	req.Host = host
-	//}
-	// 执行前置拦截器
+	if host := req.Header.Get("Host"); host != "" {
+		req.Host = host
+	}
+	// 完成所有前置行为后，执行用户自定义的前置拦截器
 	for i := range r.beforeHandler {
 		r.beforeHandler[i](req)
 	}
@@ -203,10 +203,10 @@ func (r *Requests) Do(method, toUrl string, opts ...Option) (resp *Response, err
 	if err != nil {
 		return nil, err
 	}
+	// 执行后置拦截器 todo 顺序？先用户？
 	for i := range r.afterHandler {
 		r.afterHandler[i](response)
 	}
-	// 执行前置拦截器
 	result := &Response{HttpResponse: response}
 	// 处理后置操作
 	if op.respJsonBody != nil {
