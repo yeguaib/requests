@@ -145,7 +145,7 @@ func (r *Requests) Do(method, toUrl string, opts ...Option) (resp *Response, err
 	}
 	// 处理前置操作
 	if op.ctx != nil {
-		req.WithContext(op.ctx)
+		req = req.WithContext(op.ctx)
 	}
 	if op.proto != "" {
 		req.Proto = op.proto
