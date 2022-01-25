@@ -9,7 +9,7 @@ import (
 type Response struct {
 	HttpResponse *http.Response
 	BodyData     []byte
-	Err          error
+	readErr      error
 }
 
 func (r *Response) ToBytes() ([]byte, error) {
@@ -19,6 +19,7 @@ func (r *Response) ToBytes() ([]byte, error) {
 	defer r.HttpResponse.Body.Close()
 	respBody, err := ioutil.ReadAll(r.HttpResponse.Body)
 	if err != nil {
+		r.readErr = err
 		return nil, err
 	}
 	r.BodyData = respBody

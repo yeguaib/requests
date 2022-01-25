@@ -3,6 +3,7 @@ package requests
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net"
 	"net/http"
@@ -12,6 +13,8 @@ import (
 	"time"
 )
 
+var defaultClient = NewDefault()
+
 //go:generate mockgen -source=requests.go -destination=mock/requests.go -package=mock . IRequests
 type IRequests interface {
 	Do(method, toUrl string, opts ...Option) (resp *Response, err error)
@@ -20,7 +23,6 @@ type IRequests interface {
 	Delete(url string, opts ...Option) (*Response, error)
 	Get(url string, opts ...Option) (*Response, error)
 	Head(url string, opts ...Option) (*Response, error)
-	Options(url string, opts ...Option) (*Response, error)
 	Patch(url string, opts ...Option) (*Response, error)
 
 	SetTimeout(t time.Duration)
@@ -210,10 +212,12 @@ func (r *Requests) Do(method, toUrl string, opts ...Option) (resp *Response, err
 	result := &Response{HttpResponse: response}
 	// 处理后置操作
 	if op.respJsonBody != nil {
-		// todo 此处error处理不对劲
 		err = result.ToJSON(responseData)
 		if err != nil {
-			return nil, err
+			if result.readErr != nil {
+				return nil, err
+			}
+			return nil, fmt.Errorf("unmarshal err(%w), body: %s", err, result.BodyData)
 		}
 	}
 	return result, nil
@@ -239,10 +243,30 @@ func (r *Requests) Patch(url string, opts ...Option) (*Response, error) {
 	return r.Do(PatchMethod, url, opts...)
 }
 
-func (r *Requests) Options(url string, opts ...Option) (*Response, error) {
-	return r.Do(OptionsMethod, url, opts...)
+func (r *Requests) Head(url string, opts ...Option) (*Response, error) {
+	return r.Do(HeadMethod, url, opts...)
 }
 
-func (r *Requests) Head(url string, v ...Option) (*Response, error) {
-	return r.Do(HeadMethod, url, v...)
+func Post(url string, opts ...Option) (*Response, error) {
+	return defaultClient.Post(url, opts...)
+}
+
+func Get(url string, opts ...Option) (*Response, error) {
+	return defaultClient.Get(url, opts...)
+}
+
+func Put(url string, opts ...Option) (*Response, error) {
+	return defaultClient.Put(url, opts...)
+}
+
+func Delete(url string, opts ...Option) (*Response, error) {
+	return defaultClient.Delete(url, opts...)
+}
+
+func Patch(url string, opts ...Option) (*Response, error) {
+	return defaultClient.Patch(url, opts...)
+}
+
+func Head(url string, opts ...Option) (*Response, error) {
+	return defaultClient.Head(url, opts...)
 }
